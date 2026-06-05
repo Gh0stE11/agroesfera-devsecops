@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+
+  api-dotnet:
+    image: mcr.microsoft.com/dotnet/aspnet:8.0.4
+    container_name: agroesfera-api-dotnet
+    ports:
+      - "5000:5000"
+    environment:
+      - MQTT_BROKER_URL=${MQTT_BROKER_URL}
+      - MQTT_USERNAME=${MQTT_USERNAME}
+      - MQTT_PASSWORD=${MQTT_PASSWORD}
+      - DB_CONNECTION_STRING=${DB_CONNECTION_STRING}
+    restart: unless-stopped
+
+  api-java:
+    image: eclipse-temurin:17.0.10-jre
+    container_name: agroesfera-api-java
+    ports:
+      - "8080:8080"
+    environment:
+      - ML_API_KEY=${ML_API_KEY}
+      - DB_CONNECTION_STRING=${DB_CONNECTION_STRING}
+    restart: unless-stopped
+
+  mqtt-broker:
+    image: eclipse-mosquitto:2.0.18
+    container_name: agroesfera-mqtt
+    ports:
+      - "8883:8883"
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
+    restart: unless-stopped

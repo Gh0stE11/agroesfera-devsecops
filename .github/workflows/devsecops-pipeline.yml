@@ -1,0 +1,80 @@
+name: Agroesfera - DevSecOps Pipeline
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  security-policy-gate:
+    name: Security Policy Gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verificar politica de seguranca
+        run: |
+          echo "=================================================="
+          echo "  AGROESFERA - VERIFICACAO DE POLITICA DE SEGURANCA"
+          echo "=================================================="
+          echo ""
+
+          VIOLATIONS=0
+
+          if [ ! -f "security/SECURITY_POLICY.md" ]; then
+            echo "[VIOLACAO] security/SECURITY_POLICY.md nao encontrado"
+            VIOLATIONS=$((VIOLATIONS + 1))
+          else
+            echo "[OK]       Arquivo de politica presente"
+          fi
+
+          if grep -rn 'password="' --include="*.cs" . 2>/dev/null | grep -v "//"; then
+            echo "[VIOLACAO] Senha hardcoded detectada em arquivo .cs"
+            VIOLATIONS=$((VIOLATIONS + 1))
+          else
+            echo "[OK]       Nenhuma senha hardcoded no codigo"
+          fi
+
+          if grep -rn 'MQTT_PASSWORD\s*=\s*"' --include="*.cs" . 2>/dev/null | grep -v "Environment"; then
+            echo "[VIOLACAO] Credencial IoT nao usa variavel de ambiente"
+            VIOLATIONS=$((VIOLATIONS + 1))
+          else
+            echo "[OK]       Credenciais IoT protegidas"
+          fi
+
+          if grep -rn "image:.*:latest" --include="*.yml" --exclude-dir=".github" . 2>/dev/null; then
+            echo "[VIOLACAO] Imagem Docker com tag :latest detectada"
+            VIOLATIONS=$((VIOLATIONS + 1))
+          else
+            echo "[OK]       Sem imagens Docker com tag instavel"
+          fi
+
+          echo ""
+          echo "=================================================="
+          if [ "$VIOLATIONS" -gt 0 ]; then
+            echo "  DEPLOY BLOQUEADO - $VIOLATIONS violacao(oes) detectada(s)"
+            echo "  Corrija os problemas acima antes de fazer merge."
+            echo "=================================================="
+            exit 1
+          else
+            echo "  TODAS AS POLITICAS APROVADAS - Deploy liberado"
+            echo "=================================================="
+          fi
+
+  deploy:
+    name: Deploy Staging
+    runs-on: ubuntu-latest
+    needs: security-policy-gate
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy
+        run: |
+          echo "Deploy autorizado"
+          echo "Projeto : Agroesfera"
+          echo "Commit  : ${{ github.sha }}"
+          echo "Branch  : ${{ github.ref_name }}"
