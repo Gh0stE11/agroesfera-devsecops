@@ -3,6 +3,13 @@
 Global Solution FIAP 2026/1 - Engenharia de Software
 Disciplina: Ciberseguranca | Prof. MSc. Oerton Fernandes
 
+## Integrantes
+
+Caio Freitas — RM553190  
+Caio Hideki — RM553630  
+Jorge Booz — RM552700  
+Lana Andrade — RM552596  
+Mateus Tibão — RM553267 
 ---
 
 ## Sobre o projeto
